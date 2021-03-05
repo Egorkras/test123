@@ -105,6 +105,7 @@ let death2;
 let jump;
 
 function preload() {
+  this.physics.world.setFPS(60);
   // Backgrounds and ground
   this.load.image(assets.scene.background.day, 'assets/background-day.png');
   this.load.image(assets.scene.background.night, 'assets/background-night.png');
