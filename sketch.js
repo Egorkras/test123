@@ -24,18 +24,16 @@ var config = {
 };
 
 const assets = {
-  bird: {
-    red: 'bird-red',
-  },
+  player: 'player',
   obstacle: {
     pipe: {
-      green: {
-        top: 'pipe-green-top',
-        bottom: 'pipe-green-bottom',
+      blue: {
+        top: 'pipe-blue-top',
+        bottom: 'pipe-blue-bottom',
       },
-      red: {
-        top: 'pipe-red-top',
-        bottom: 'pipe-red-bottom',
+      yellow: {
+        top: 'pipe-yellow-top',
+        bottom: 'pipe-yellow-bottom',
       },
     },
   },
@@ -65,11 +63,9 @@ const assets = {
     number9: 'number9',
   },
   animation: {
-    bird: {
-      red: {
-        clapWings: 'red-clap-wings',
-        stop: 'red-stop',
-      },
+    player: {
+      clapWings: 'clap-wings',
+      stop: 'stop',
     },
     ground: {
       moving: 'moving-ground',
@@ -77,6 +73,11 @@ const assets = {
     },
   },
 };
+
+const playerJumpVelocity = -350;
+const FPS = 60;
+const pipeSpeed = -100;
+const pipeDistance = 1900;
 
 var game = new Phaser.Game(config);
 
@@ -102,7 +103,7 @@ let death2;
 let jump;
 
 function preload() {
-  this.physics.world.setFPS(60);
+  this.physics.world.setFPS(FPS);
   // Backgrounds and ground
   this.load.image(assets.scene.background.day, 'assets/background-day.png');
   this.load.image(assets.scene.background.night, 'assets/background-night.png');
@@ -112,15 +113,18 @@ function preload() {
   });
 
   // Pipes
-  this.load.image(assets.obstacle.pipe.green.top, 'assets/pipe-green-top.png');
+  this.load.image(assets.obstacle.pipe.blue.top, 'assets/pipe-blue-top.png');
   this.load.image(
-    assets.obstacle.pipe.green.bottom,
-    'assets/pipe-green-bottom.png'
+    assets.obstacle.pipe.blue.bottom,
+    'assets/pipe-blue-bottom.png'
   );
-  this.load.image(assets.obstacle.pipe.red.top, 'assets/pipe-red-top.png');
   this.load.image(
-    assets.obstacle.pipe.red.bottom,
-    'assets/pipe-red-bottom.png'
+    assets.obstacle.pipe.yellow.top,
+    'assets/pipe-yellow-top.png'
+  );
+  this.load.image(
+    assets.obstacle.pipe.yellow.bottom,
+    'assets/pipe-yellow-bottom.png'
   );
 
   // Start game
@@ -130,8 +134,8 @@ function preload() {
   this.load.image(assets.scene.gameOver, 'assets/gameover.png');
   this.load.image(assets.scene.restart, 'assets/restart-button.png');
 
-  // Bird
-  this.load.spritesheet(assets.bird.red, 'assets/bird-red-sprite.png', {
+  // Player
+  this.load.spritesheet(assets.player, 'assets/player.png', {
     frameWidth: 35,
     frameHeight: 24,
   });
@@ -157,12 +161,12 @@ function create() {
   backgroundDay = this.add
     .image(assets.scene.width, 256, assets.scene.background.day)
     .setInteractive();
-  backgroundDay.on('pointerdown', moveBird);
+  backgroundDay.on('pointerdown', playerJump);
 
   backgroundNight = this.add
     .image(assets.scene.width, 256, assets.scene.background.night)
     .setInteractive();
-  backgroundNight.on('pointerdown', moveBird);
+  backgroundNight.on('pointerdown', playerJump);
 
   gapsGroup = this.physics.add.group();
   pipesGroup = this.physics.add.group();
@@ -208,8 +212,8 @@ function create() {
 
   //  Tomahawk Animation
   this.anims.create({
-    key: assets.animation.bird.red.clapWings,
-    frames: this.anims.generateFrameNumbers(assets.bird.red, {
+    key: assets.animation.player.clapWings,
+    frames: this.anims.generateFrameNumbers(assets.player, {
       start: 0,
       end: 2,
     }),
@@ -217,10 +221,10 @@ function create() {
     repeat: -1,
   });
   this.anims.create({
-    key: assets.animation.bird.red.stop,
+    key: assets.animation.player.stop,
     frames: [
       {
-        key: assets.bird.red,
+        key: assets.player,
         frame: 1,
       },
     ],
@@ -255,7 +259,7 @@ function update(time, delta) {
   if (gameOver || !gameStarted) return;
 
   if (framesMoveUp > 0) framesMoveUp--;
-  else if (Phaser.Input.Keyboard.JustDown(upButton)) moveBird();
+  else if (Phaser.Input.Keyboard.JustDown(upButton)) playerJump();
   else {
     // player.setVelocityY(120)
 
@@ -266,15 +270,15 @@ function update(time, delta) {
     if (child == undefined) return;
 
     if (child.x < -50) child.destroy();
-    else child.setVelocityX(-100);
+    else child.setVelocityX(pipeSpeed);
   });
 
   gapsGroup.children.iterate(function (child) {
-    child.body.setVelocityX(-100);
+    child.body.setVelocityX(pipeSpeed);
   });
 
   nextPipes += delta;
-  if (nextPipes >= 1900) {
+  if (nextPipes >= pipeDistance) {
     makePipes(game.scene.scenes[0]);
     nextPipes = 0;
   }
@@ -290,14 +294,14 @@ function playRandomDeathSound() {
   }
 }
 
-function hitBird(player) {
+function playerHit(player) {
   this.physics.pause();
   playRandomDeathSound();
 
   gameOver = true;
   gameStarted = false;
 
-  player.anims.play(assets.animation.bird.red.stop);
+  player.anims.play(assets.animation.player.stop);
   ground.anims.play(assets.animation.ground.stop);
 
   gameOverBanner.visible = true;
@@ -312,9 +316,9 @@ function updateScore(_, gap) {
     backgroundDay.visible = !backgroundDay.visible;
     backgroundNight.visible = !backgroundNight.visible;
 
-    if (currentPipe === assets.obstacle.pipe.green)
-      currentPipe = assets.obstacle.pipe.red;
-    else currentPipe = assets.obstacle.pipe.green;
+    if (currentPipe === assets.obstacle.pipe.yellow)
+      currentPipe = assets.obstacle.pipe.blue;
+    else currentPipe = assets.obstacle.pipe.yellow;
   }
 
   updateScoreboard();
@@ -338,15 +342,14 @@ function makePipes(scene) {
   pipeBottom.body.allowGravity = false;
 }
 
-function moveBird() {
+function playerJump() {
   if (gameOver) return;
 
   if (!gameStarted) startGame(game.scene.scenes[0]);
 
-  player.setVelocityY(-350);
+  player.setVelocityY(playerJumpVelocity);
   player.angle = -15;
   framesMoveUp = 5;
-
   jump.play();
 }
 
@@ -390,22 +393,22 @@ function restartGame() {
 function prepareGame(scene) {
   framesMoveUp = 0;
   nextPipes = 0;
-  currentPipe = assets.obstacle.pipe.green;
+  currentPipe = assets.obstacle.pipe.yellow;
   score = 0;
   gameOver = false;
   backgroundDay.visible = true;
   backgroundNight.visible = false;
   messageInitial.visible = true;
 
-  birdName = assets.bird.red;
-  player = scene.physics.add.sprite(60, 265, birdName);
-  player.body.setSize(28, 18);
+  player = assets.player;
+  player = scene.physics.add.sprite(60, 265, player);
+  player.body.setSize(28, 16);
   player.setCollideWorldBounds(true);
-  player.anims.play(assets.animation.bird.red.clapWings, true);
+  player.anims.play(assets.animation.player.clapWings, true);
   player.body.allowGravity = false;
 
-  scene.physics.add.collider(player, ground, hitBird, null, scene);
-  scene.physics.add.collider(player, pipesGroup, hitBird, null, scene);
+  scene.physics.add.collider(player, ground, playerHit, null, scene);
+  scene.physics.add.collider(player, pipesGroup, playerHit, null, scene);
 
   scene.physics.add.overlap(player, gapsGroup, updateScore, null, scene);
 
