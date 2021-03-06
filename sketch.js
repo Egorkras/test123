@@ -2,7 +2,6 @@ var config = {
   type: Phaser.AUTO,
   backgroundColor: '#2dab2d',
   scale: {
-    parent: 'phaser-example',
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 288,
@@ -27,8 +26,6 @@ var config = {
 const assets = {
   bird: {
     red: 'bird-red',
-    yellow: 'bird-yellow',
-    blue: 'bird-blue',
   },
   obstacle: {
     pipe: {
@@ -38,7 +35,7 @@ const assets = {
       },
       red: {
         top: 'pipe-red-top',
-        bottom: 'pipe-red-bo',
+        bottom: 'pipe-red-bottom',
       },
     },
   },
@@ -133,7 +130,7 @@ function preload() {
   this.load.image(assets.scene.gameOver, 'assets/gameover.png');
   this.load.image(assets.scene.restart, 'assets/restart-button.png');
 
-  // Birds
+  // Bird
   this.load.spritesheet(assets.bird.red, 'assets/bird-red-sprite.png', {
     frameWidth: 35,
     frameHeight: 24,
@@ -253,7 +250,7 @@ function create() {
   restartButton.visible = false;
 }
 
-function update() {
+function update(time, delta) {
   //do not run the update loop
   if (gameOver || !gameStarted) return;
 
@@ -276,8 +273,8 @@ function update() {
     child.body.setVelocityX(-100);
   });
 
-  nextPipes++;
-  if (nextPipes === 115) {
+  nextPipes += delta;
+  if (nextPipes >= 1900) {
     makePipes(game.scene.scenes[0]);
     nextPipes = 0;
   }
@@ -346,7 +343,7 @@ function moveBird() {
 
   if (!gameStarted) startGame(game.scene.scenes[0]);
 
-  player.setVelocityY(-325);
+  player.setVelocityY(-350);
   player.angle = -15;
   framesMoveUp = 5;
 
@@ -402,6 +399,7 @@ function prepareGame(scene) {
 
   birdName = assets.bird.red;
   player = scene.physics.add.sprite(60, 265, birdName);
+  player.body.setSize(28, 18);
   player.setCollideWorldBounds(true);
   player.anims.play(assets.animation.bird.red.clapWings, true);
   player.body.allowGravity = false;
