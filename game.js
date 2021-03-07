@@ -45,6 +45,7 @@ const assets = {
     },
     ground: 'ground',
     gameOver: 'game-over',
+    highScoreBanner: 'high-score',
     restart: 'restart-button',
     messageInitial: 'message-initial',
   },
@@ -74,7 +75,7 @@ const assets = {
   },
 };
 
-const playerJumpVelocity = -350;
+const playerJumpVelocity = -325;
 const FPS = 60;
 const pipeSpeed = -100;
 const pipeDistance = 1900;
@@ -101,6 +102,9 @@ let score;
 let death1;
 let death2;
 let jump;
+
+let highScoreBanner;
+let highScore = parseInt(localStorage.getItem('score') || 0);
 
 function preload() {
   this.physics.world.setFPS(FPS);
@@ -133,6 +137,7 @@ function preload() {
   // End game
   this.load.image(assets.scene.gameOver, 'assets/gameover.png');
   this.load.image(assets.scene.restart, 'assets/restart-button.png');
+  this.load.image(assets.scene.highScoreBanner, 'assets/high-score.png');
 
   // Player
   this.load.spritesheet(assets.player, 'assets/player.png', {
@@ -171,6 +176,7 @@ function create() {
   gapsGroup = this.physics.add.group();
   pipesGroup = this.physics.add.group();
   scoreboardGroup = this.physics.add.staticGroup();
+  scoreboardGroupGameOver = this.physics.add.staticGroup();
 
   ground = this.physics.add.sprite(
     assets.scene.width,
@@ -238,6 +244,14 @@ function create() {
 
   prepareGame(this);
 
+  highScoreBanner = this.add.image(
+    assets.scene.width,
+    80,
+    assets.scene.highScoreBanner
+  );
+  highScoreBanner.setDepth(20);
+  highScoreBanner.visible = false;
+
   gameOverBanner = this.add.image(
     assets.scene.width,
     206,
@@ -278,9 +292,16 @@ function update(time, delta) {
   });
 
   nextPipes += delta;
-  if (nextPipes >= pipeDistance) {
-    makePipes(game.scene.scenes[0]);
-    nextPipes = 0;
+  if (score == 421) {
+    if (nextPipes >= 50) {
+      makePipes(game.scene.scenes[0]);
+      nextPipes = 0;
+    }
+  } else {
+    if (nextPipes >= pipeDistance) {
+      makePipes(game.scene.scenes[0]);
+      nextPipes = 0;
+    }
   }
 }
 
@@ -306,6 +327,35 @@ function playerHit(player) {
 
   gameOverBanner.visible = true;
   restartButton.visible = true;
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('score', highScore);
+  }
+
+  const scoreAsString = highScore.toString();
+  if (scoreAsString.length == 1)
+    scoreboardGroupGameOver
+      .create(assets.scene.width, 115, assets.scoreboard.base + highScore)
+      .setDepth(10);
+  else {
+    let initialPosition =
+      assets.scene.width -
+      (highScore.toString().length * assets.scoreboard.width) / 2;
+
+    for (let i = 0; i < scoreAsString.length; i++) {
+      scoreboardGroupGameOver
+        .create(
+          initialPosition + 10,
+          115,
+          assets.scoreboard.base + scoreAsString[i]
+        )
+        .setDepth(10);
+      initialPosition += assets.scoreboard.width;
+    }
+  }
+  highScoreBanner.visible = true;
+  scoreboardGroupGameOver.visible = true;
 }
 
 function updateScore(_, gap) {
@@ -321,7 +371,7 @@ function updateScore(_, gap) {
     else currentPipe = assets.obstacle.pipe.yellow;
   }
 
-  updateScoreboard();
+  updateScoreboard(score);
 }
 
 function makePipes(scene) {
@@ -353,7 +403,7 @@ function playerJump() {
   jump.play();
 }
 
-function updateScoreboard() {
+function updateScoreboard(score) {
   scoreboardGroup.clear(true, true);
 
   const scoreAsString = score.toString();
@@ -368,7 +418,11 @@ function updateScoreboard() {
 
     for (let i = 0; i < scoreAsString.length; i++) {
       scoreboardGroup
-        .create(initialPosition, 30, assets.scoreboard.base + scoreAsString[i])
+        .create(
+          initialPosition + 10,
+          30,
+          assets.scoreboard.base + scoreAsString[i]
+        )
         .setDepth(10);
       initialPosition += assets.scoreboard.width;
     }
@@ -380,9 +434,12 @@ function restartGame() {
   pipesGroup.clear(true, true);
   gapsGroup.clear(true, true);
   scoreboardGroup.clear(true, true);
+  scoreboardGroupGameOver.clear(true, true);
   player.destroy();
   gameOverBanner.visible = false;
   restartButton.visible = false;
+  scoreboardGroupGameOver.visible = false;
+  highScoreBanner.visible = false;
 
   const gameScene = game.scene.scenes[0];
   prepareGame(gameScene);
