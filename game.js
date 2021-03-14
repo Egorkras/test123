@@ -1,6 +1,6 @@
 var config = {
   type: Phaser.AUTO,
-  backgroundColor: '#2dab2d',
+  backgroundColor: '#4EC0C9',
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -75,7 +75,7 @@ const assets = {
   },
 };
 
-const playerJumpVelocity = -325;
+const playerJumpVelocity = -335;
 const FPS = 60;
 const pipeSpeed = -100;
 const pipeDistance = 1900;
@@ -246,7 +246,7 @@ function create() {
 
   highScoreBanner = this.add.image(
     assets.scene.width,
-    80,
+    70,
     assets.scene.highScoreBanner
   );
   highScoreBanner.setDepth(20);
@@ -254,7 +254,7 @@ function create() {
 
   gameOverBanner = this.add.image(
     assets.scene.width,
-    206,
+    210,
     assets.scene.gameOver
   );
   gameOverBanner.setDepth(20);
@@ -269,14 +269,11 @@ function create() {
 }
 
 function update(time, delta) {
-  //do not run the update loop
   if (gameOver || !gameStarted) return;
 
   if (framesMoveUp > 0) framesMoveUp--;
   else if (Phaser.Input.Keyboard.JustDown(upButton)) playerJump();
   else {
-    // player.setVelocityY(120)
-
     if (player.angle < 90) player.angle += 1;
   }
 
@@ -292,16 +289,10 @@ function update(time, delta) {
   });
 
   nextPipes += delta;
-  if (score == 421) {
-    if (nextPipes >= 50) {
-      makePipes(game.scene.scenes[0]);
-      nextPipes = 0;
-    }
-  } else {
-    if (nextPipes >= pipeDistance) {
-      makePipes(game.scene.scenes[0]);
-      nextPipes = 0;
-    }
+
+  if (nextPipes >= pipeDistance) {
+    makePipes(game.scene.scenes[0]);
+    nextPipes = 0;
   }
 }
 
@@ -336,7 +327,7 @@ function playerHit(player) {
   const scoreAsString = highScore.toString();
   if (scoreAsString.length == 1)
     scoreboardGroupGameOver
-      .create(assets.scene.width, 115, assets.scoreboard.base + highScore)
+      .create(assets.scene.width, 107, assets.scoreboard.base + highScore)
       .setDepth(10);
   else {
     let initialPosition =
@@ -347,7 +338,7 @@ function playerHit(player) {
       scoreboardGroupGameOver
         .create(
           initialPosition + 10,
-          115,
+          107,
           assets.scoreboard.base + scoreAsString[i]
         )
         .setDepth(10);
@@ -379,17 +370,29 @@ function makePipes(scene) {
 
   const pipeTopY = Phaser.Math.Between(-120, 120);
 
-  const gap = scene.add.line(400, pipeTopY + 210, 0, 0, 0, 98);
+  const gap = scene.add.line(320, pipeTopY + 210, 0, 0, 0, 98);
   gapsGroup.add(gap);
   gap.body.allowGravity = false;
 
   gap.visible = false;
 
-  const pipeTop = pipesGroup.create(400, pipeTopY, currentPipe.top);
-  pipeTop.body.allowGravity = false;
+  if (score == 421) {
+    const pipeTop = pipesGroup.create(320, 50, currentPipe.top);
+    pipeTop.body.allowGravity = false;
 
-  const pipeBottom = pipesGroup.create(400, pipeTopY + 420, currentPipe.bottom);
-  pipeBottom.body.allowGravity = false;
+    const pipeBottom = pipesGroup.create(320, 370, currentPipe.bottom);
+    pipeBottom.body.allowGravity = false;
+  } else {
+    const pipeTop = pipesGroup.create(320, pipeTopY, currentPipe.top);
+    pipeTop.body.allowGravity = false;
+
+    const pipeBottom = pipesGroup.create(
+      320,
+      pipeTopY + 420,
+      currentPipe.bottom
+    );
+    pipeBottom.body.allowGravity = false;
+  }
 }
 
 function playerJump() {
@@ -451,7 +454,7 @@ function prepareGame(scene) {
   framesMoveUp = 0;
   nextPipes = 0;
   currentPipe = assets.obstacle.pipe.yellow;
-  score = 0;
+  score = 415;
   gameOver = false;
   backgroundDay.visible = true;
   backgroundNight.visible = false;
