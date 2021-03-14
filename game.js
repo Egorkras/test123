@@ -454,7 +454,7 @@ function prepareGame(scene) {
   framesMoveUp = 0;
   nextPipes = 0;
   currentPipe = assets.obstacle.pipe.yellow;
-  score = 415;
+  score = 0;
   gameOver = false;
   backgroundDay.visible = true;
   backgroundNight.visible = false;
