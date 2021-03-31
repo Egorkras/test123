@@ -75,10 +75,10 @@ const assets = {
   },
 };
 
-const playerJumpVelocity = -335;
+const playerJumpVelocity = -340;
 const FPS = 60;
 const pipeSpeed = -100;
-const pipeDistance = 1900;
+const pipeDistance = 1775;
 
 var game = new Phaser.Game(config);
 
@@ -104,7 +104,13 @@ let death2;
 let jump;
 
 let highScoreBanner;
-let highScore = parseInt(localStorage.getItem('score') || 0);
+
+let es = btoa('score');
+let ez = btoa('0');
+
+let pullScore = localStorage.getItem(es) || ez;
+console.log(atob(pullScore));
+let highScore = parseInt(atob(pullScore));
 
 function preload() {
   this.physics.world.setFPS(FPS);
@@ -321,7 +327,7 @@ function playerHit(player) {
 
   if (score > highScore) {
     highScore = score;
-    localStorage.setItem('score', highScore);
+    localStorage.setItem(es, btoa(String(highScore)));
   }
 
   const scoreAsString = highScore.toString();
